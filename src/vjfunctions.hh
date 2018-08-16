@@ -48,7 +48,7 @@
 
 namespace vjet {
 
-  const int d=3;    const int g=2;
+  const int d_=3;    const int g_=2;
 
   
   const double numEvents = 1000;       //  NUMBER OF EVENTS  (-1 runs all)
@@ -60,8 +60,9 @@ namespace vjet {
   const double jetMinPt = 2.0;      //  Jet Pt >= 2.0 GeV
   const double jetMaxPt = 60.0;      //  Jet Pt <= 60.0 GeV
 
-  const TString chainName[d] = { "JetTree", "JetTreeMC", "JetTree" };
-  const TString dataName[d] = { "pp High Tower", "Pythia 6 MC", "Pythia 6 + GEANT" };  
+  const TString chainName[d_] = { "JetTree", "JetTreeMC", "JetTree" };
+  const TString dataName[d_] = { "pp High Tower", "Pythia 6 MC", "Pythia 6 + GEANT" };  
+  const TString dataString[d_] = { "ppHT", "P6MC", "P6Ge" };  
   
   std::vector<fastjet::PseudoJet> GatherParticles ( TStarJetVectorContainer<TStarJetVector> * container , double etaCutVal, double partMinPtVal, std::vector<fastjet::PseudoJet> & rawParticles );
 
