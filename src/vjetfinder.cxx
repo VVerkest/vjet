@@ -36,37 +36,64 @@ int main () {
   TString histoName, histoTitle, canvasName, canvasTitle, NAME, TITLE;       TString fileName;  //  For x-sec
 
   vector<PseudoJet> rawParticles[d_][g_], Jets[d_][g_], groomedJets[d_][g_];
-  double weight, Rval, Zval;
-
+  TStarJetPicoReader Reader[d_];  TChain* Chain[d_];
+  TStarJetPicoEventHeader* header[d_];    TStarJetPicoEvent* event[d_];
+  TStarJetVector* sv[d_];  TStarJetVectorContainer<TStarJetVector> * container[d_];
+  TTree * vjTree[d_][g_];  double jetPt[d_][g_], jetEta[d_][g_], jetPhi[d_][g_], jetE[d_][g_], jetM[d_][g_], Rg[d_][g_], Zg[d_][g_], wt[d_][g_];  int EventID[d_][g_], nCons[d_][g_];
+  double weight, Rval, Zval;  int ID;
   TFile * outFile = new TFile ("out/vjet.root","RECREATE");
 
 
 
   for ( int d=0; d<d_; ++d ) {
+    
+    Chain[d] = new TChain( chainName[d] );     Chain[d]->Add( DstFile[d] );
+    InitReaderPythia( Reader[d], Chain[d], numEvents );
 
-    TChain* Chain[d] = new TChain( chainName[d].c_str );     Chain[d]->Add( "AddedGeantPythia/picoDst*" );
-    TStarJetPicoReader Reader[d];                               InitReaderPythia( Reader[d], Chain[d], numEvents );
-    TStarJetPicoEventHeader* header[d];    TStarJetPicoEvent* event[d];    TStarJetVector* sv[d];
-    TStarJetVectorContainer<TStarJetVector> * container[d];
   
     for ( int g=0; g<g_; ++g ) {
-      
 
-      TTree * vjTree[d][g];
-      double jetPt[d][g], jetEta[d][g], jetPhi[d][g], jetE[d][g], sdPt[d][g], sdEta[d][g], sdPhi[d][g];
-      double sdE[d][g], wt[d][g], Rg[d][g], Zg[d][g];  int EventID[d][g], nJetCons[d][g], nSDCons[d][g];
-
-      NAME = dataString[d] + "JetTree";
-      TITLE = dataName[d] + " Jet Tree";
+      NAME = dataString[d] + "JetTree";      TITLE = dataName[d] + " Jet Tree";
       vjTree[d][g] = new TTree( NAME, TITLE );
-
+      vjTree[d][g]->Branch("jetPt", &jetPt[d][g]);       vjTree[d][g]->Branch("jetEta", &jetEta[d][g]);       vjTree[d][g]->Branch("jetPhi", &jetPhi[d][g]);       vjTree[d][g]->Branch("jetE", &jetE[d][g]);
+      vjTree[d][g]->Branch("jetM", &jetM[d][g]);       vjTree[d][g]->Branch("Rg", &Rg[d][g]);       vjTree[d][g]->Branch("Zg", &Zg[d][g]);       vjTree[d][g]->Branch("wt", &wt[d][g]);
+      vjTree[d][g]->Branch("EventID", &EventID[d][g]);       vjTree[d][g]->Branch("nCons", &nCons[d][g]);
     }
     
   }
 
 
 
+  // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  BEGIN EVENT LOOP!  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+  while ( Reader[0].NextEvent() ) {
+
+    Reader[0].PrintStatus(20); 
+
+    rawParticles[0][0].clear();  Jets[0][0].clear();  //  clear containers
+
+    event[0] = Reader[0].GetEvent();    header[0] = event[0]->GetHeader();
+
+    container[0] = Reader[0].GetOutputContainer();
+
+    if ( Vz_candidate( header[0], absMaxVz ) == false ) { continue; }
+    
+    ID = Reader[0].GetNOfCurrentEvent();
+    fileName =  Reader[0].GetInputChain()->GetCurrentFile()->GetName();
+    weight = LookupXsec( fileName );
+    
+    GatherParticles ( container[0], etaCut, partMinPt, rawParticles[0][0]);
+
+    
+    wt[0][0] = weight;
+    EventID[0][0] = ID;
+    vjTree[0][0]->Fill();
+    
+  }
+  // ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~  END EVENT LOOP!  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
   
+
+  vjTree[0][0]->Write();
   outFile->Close();
   
   return 0;

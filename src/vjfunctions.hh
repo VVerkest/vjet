@@ -60,9 +60,10 @@ namespace vjet {
   const double jetMinPt = 2.0;      //  Jet Pt >= 2.0 GeV
   const double jetMaxPt = 60.0;      //  Jet Pt <= 60.0 GeV
 
-  const TString chainName[d_] = { "JetTree", "JetTreeMC", "JetTree" };
+  const TString chainName[d_] = { "JetTree", "JetTreeMc", "JetTree" };
   const TString dataName[d_] = { "pp High Tower", "Pythia 6 MC", "Pythia 6 + GEANT" };  
   const TString dataString[d_] = { "ppHT", "P6MC", "P6Ge" };  
+  const TString DstFile[d_] = { "ppHT/picoDst*", "AddedGeantPythia/picoDst*", "AddedGeantPythia/picoDst*" };
   
   std::vector<fastjet::PseudoJet> GatherParticles ( TStarJetVectorContainer<TStarJetVector> * container , double etaCutVal, double partMinPtVal, std::vector<fastjet::PseudoJet> & rawParticles );
 
