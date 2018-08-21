@@ -50,8 +50,10 @@ namespace vjet {
 
   const int d_=3;    const int g_=2;
 
+  const double beta = 0.0;
+  const double z_cut = 0.1;
   
-  const double numEvents = 1000;       //  NUMBER OF EVENTS  (-1 runs all)
+  const double numEvents = -1;       //  NUMBER OF EVENTS  (-1 runs all)
   const double pi = 3.14159265;
   const double R = 0.4;
   const double absMaxVz = 30.0;   // |Vz|<=30 cm
@@ -60,16 +62,22 @@ namespace vjet {
   const double jetMinPt = 2.0;      //  Jet Pt >= 2.0 GeV
   const double jetMaxPt = 60.0;      //  Jet Pt <= 60.0 GeV
 
+  const std::string y6PPTowerList = "src/Combined_y7_PP_Nick.txt";
   const TString chainName[d_] = { "JetTree", "JetTreeMc", "JetTree" };
   const TString dataName[d_] = { "pp High Tower", "Pythia 6 MC", "Pythia 6 + GEANT" };  
   const TString dataString[d_] = { "ppHT", "P6MC", "P6Ge" };  
   const TString DstFile[d_] = { "ppHT/picoDst*", "AddedGeantPythia/picoDst*", "AddedGeantPythia/picoDst*" };
+
+  const fastjet::Selector etaSelector = fastjet::SelectorAbsEtaMax( 1.0-R );
+  const fastjet::Selector ptMinSelector = fastjet::SelectorPtMin( jetMinPt );
+  const fastjet::Selector ptMaxSelector = fastjet::SelectorPtMax( jetMaxPt );
+  const fastjet::Selector etaPtSelector = etaSelector && ptMinSelector && ptMaxSelector;       //   JET SELECTOR
   
   std::vector<fastjet::PseudoJet> GatherParticles ( TStarJetVectorContainer<TStarJetVector> * container , double etaCutVal, double partMinPtVal, std::vector<fastjet::PseudoJet> & rawParticles );
 
-  void FillJetInfo_WEIGHTED(std::vector<fastjet::PseudoJet> &rawJets, TTree* Tree, int event, double &jPt, double &jEta, double &jPhi, double &jE, int &jEvent,int &jncons,double &wt,double weight);
-
-  void FillSDJetInfo_WEIGHTED ( fastjet::PseudoJet &rawJets, TTree* Tree, int event, double &jPt, double &jEta, double &jPhi, double &jE, int &jEvent,int &jncons,double &wt,double &jRg,double &jZg,double weight,double rg_val,double zg_val );
+  //  jetPt, jetEta, jetPhi, jetE, jetM, Rg, Zg, wt, int EventID, nCons;
+  
+  void FillJetInfo ( std::vector<fastjet::PseudoJet> &rawJets, TTree* Tree, int event, double weight, double &jPt, double &jEta, double &jPhi, double &jE, double &jM, double &jRg, double &jZg, double &jwt, int &jEvent, int &jncons);
   
   bool Vz_candidate( TStarJetPicoEventHeader* header, double VzCut );
 
@@ -78,6 +86,8 @@ namespace vjet {
   double LookupXsec(TString::TString & currentfile );
 
   void InitReaderPythia( TStarJetPicoReader & reader, TChain* chain, int nEvents );
+
+  void InitReader( TStarJetPicoReader & reader, TChain* chain, int nEvents );
   
 }
 
