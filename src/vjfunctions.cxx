@@ -25,23 +25,21 @@ namespace vjet {
 
 
 
-  void FillJetInfo_WEIGHTED ( std::vector<fastjet::PseudoJet> &rawJets, TTree* Tree, int event, double &jPt, double &jEta, double &jPhi, double &jE, int &jEvent,int &jncons,double &wt,double weight ) {
+  void FillJetInfo ( std::vector<fastjet::PseudoJet> &rawJets, TTree* Tree, int event, double weight, double &jPt, double &jEta, double &jPhi, double &jE, double &jM, double &jRg, double &jZg, double &jwt, int &jEvent, int &jncons) {
+    cout << "in filljetinfo" << endl;
     for ( int j=0; j<rawJets.size(); j++ ) {   // FILL JET INFO WEIGHED BY X-SECTION
+      cout << "j = " << j << endl;
       jPt = rawJets[j].pt();    jEta = rawJets[j].eta();    jPhi = rawJets[j].phi();
-      jE = rawJets[j].e();    jEvent = event;    wt = weight;
+      jE = rawJets[j].e();
+      cout << "filling mass/rg/zg" << endl;
+      jM = rawJets[j].structure_of<fastjet::contrib::SoftDrop>().mu();
+      jRg = rawJets[j].structure_of<fastjet::contrib::SoftDrop>().delta_R();
+      jZg = rawJets[j].structure_of<fastjet::contrib::SoftDrop>().symmetry();
+      
+      jwt = weight;    jEvent = event;
       std::vector<fastjet::PseudoJet> Cons = rawJets[j].constituents(); jncons = Cons.size();
       Tree->Fill();
     }
-  }
-
-
-
-  void FillSDJetInfo_WEIGHTED ( fastjet::PseudoJet &rawJet, TTree* Tree, int event, double &jPt, double &jEta, double &jPhi, double &jE, int &jEvent,int &jncons,double &wt,double &jRg,double &jZg,double weight,double rg_val,double zg_val ) {      // FILL JET INFO WEIGHED BY X-SECTION
-      jPt = rawJet.pt();    jEta = rawJet.eta();    jPhi = rawJet.phi();
-      jE = rawJet.e();    jEvent = event;    wt = weight;
-      std::vector<fastjet::PseudoJet> Cons = rawJet.constituents(); jncons = Cons.size();
-      jRg = rg_val;      jZg = zg_val;
-      Tree->Fill();
   }
 
   
@@ -171,6 +169,62 @@ namespace vjet {
     
     // Initialize the reader
     reader.Init( nEvents ); //runs through all events with -1
+  }
+
+
+
+  void InitReader( TStarJetPicoReader & reader, TChain* chain, int nEvents ) {
+
+    std::string collisionType = "pp";
+    
+    // First tolower() on the analysisType
+    // shouldnt be necessary....
+    std::transform(collisionType.begin(), collisionType.end(), collisionType.begin(), ::tolower);
+    
+    // set the chain
+    reader.SetInputChain( chain );
+    // apply hadronic correction - subtract 100% of charged track energy from towers
+    reader.SetApplyFractionHadronicCorrection( true );
+    reader.SetFractionHadronicCorrection( 0.9999 );
+    reader.SetRejectTowerElectrons( kFALSE );
+    
+    // Event and track selection
+    // -------------------------
+    
+    TStarJetPicoEventCuts* evCuts = reader.GetEventCuts();
+    evCuts->SetVertexZCut ( absMaxVz );
+    evCuts->SetMaxEventPtCut( 30.0 );
+    evCuts->SetMaxEventEtCut( 30.0 );
+    evCuts->SetVertexZDiffCut( 9999 );
+    evCuts->SetRefMultCut( 0 );
+    
+    // Tracks cuts
+    TStarJetPicoTrackCuts* trackCuts = reader.GetTrackCuts();
+    trackCuts->SetDCACut( 1 );
+    trackCuts->SetMinNFitPointsCut( 20 );
+    trackCuts->SetFitOverMaxPointsCut( 0.52 );
+    trackCuts->SetMaxPtCut ( 9999.0 );
+
+    std::cout << "Using these track cuts:" << std::endl;
+    std::cout << " dca : " << trackCuts->GetDCACut(  ) << std::endl;
+    std::cout << " nfit : " <<   trackCuts->GetMinNFitPointsCut( ) << std::endl;
+    std::cout << " nfitratio : " <<   trackCuts->GetFitOverMaxPointsCut( ) << std::endl;
+    
+    // Towers
+    TStarJetPicoTowerCuts* towerCuts = reader.GetTowerCuts();
+    towerCuts->SetMaxEtCut( 9999.0 );
+    towerCuts->AddBadTowers( y6PPTowerList.c_str() );
+    
+    std::cout << "Using these tower cuts:" << std::endl;
+    std::cout << "  GetMaxEtCut = " << towerCuts->GetMaxEtCut() << std::endl;
+    std::cout << "  Gety8PythiaCut = " << towerCuts->Gety8PythiaCut() << std::endl;
+    
+    // V0s: Turn off
+    reader.SetProcessV0s(false);
+    
+    // Initialize the reader
+    reader.Init( nEvents ); //runs through all events with -1
+
   }
 
   
